@@ -1,8 +1,0 @@
-﻿  error.cpp
-  test-wikiscraper.cpp
-D:\learning\自学项目\CS106L\cs106L-assignment2\test-wikiscraper.cpp(1,1): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
-D:\DownloadedSoftware\VisualStudio2022\IDE\VC\Tools\MSVC\14.36.32532\include\filesystem(13): warning STL4038: The contents of <filesystem> are available only with C++17 or later.
-D:\learning\自学项目\CS106L\cs106L-assignment2\wikiscraper.h(4,10): fatal  error C1083: 无法打开包括文件: “cpr/cpr.h”: No such file or directory
-  wikiscraper.cpp
-D:\learning\自学项目\CS106L\cs106L-assignment2\wikiscraper.h(4,10): fatal  error C1083: 无法打开包括文件: “cpr/cpr.h”: No such file or directory
-  正在生成代码...
