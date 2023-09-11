@@ -581,8 +581,7 @@ else
 
   ```cpp
   /* Try to insert normally. */
-  pair<map<string, int>::iterator, bool> result =
-  myMap.insert(make_pair("STL", 137));
+  pair<map<string, int>::iterator, bool> result = myMap.insert(make_pair("STL", 137));
   /* If insertion failed, manually set the value. */
   if(!result.second)
   	result.first->second = 137;
@@ -592,7 +591,7 @@ else
 
 ### 综合案例——关键字数量统计
 
-[代码实现](https://github.com/scz321/CS106L/blob/main/cppTest/cppTest/t1.cpp)
+[代码实现](https://github.com/scz321/CS106L/blob/main/practicalDemo/practicalDemo/keyWordsCount.hpp)
 
 - 自顶向下开发，先确定好有哪些函数，在一步步实现这些函数
 
@@ -618,3 +617,7 @@ else
 
 - set,map的合理使用
 - sstream的妙用————一种简洁有效的逐个获取文本中所有words的方式
+
+### DFA
+
+- 凡是能画出状态转移图的，都大概率可以使用这种方法解决，关键在于，状态转移图不一定好画？
