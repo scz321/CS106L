@@ -1,0 +1,4 @@
+// Feel free to replace this file's contents with whichever pairs of
+// words you want to try out! Remember that the first line needs to
+// be the number of pairs in this file. Take a look at test-small.txt
+// or test-big.txt for an example of the format.

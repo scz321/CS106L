@@ -1,0 +1,10 @@
+# Input file for tests! Don't edit this unless you also edit test-wikiscraper.cpp
+
+./build/test 1
+./build/test 2
+./build/test 3
+./build/test 4
+./build/test 5
+./build/test 6
+./build/test 7
+./build/test 8
