@@ -24,6 +24,7 @@
   <ItemGroup>
     <ClInclude Include="DFA.hpp" />
     <ClInclude Include="keyWordsCount.hpp" />
+    <ClInclude Include="PalindromesJudge.hpp" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

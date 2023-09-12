@@ -9,7 +9,10 @@ git push前：
 
 ```
 git config --global http.proxy
+git config --global https.proxy 
+(windows需要管理员权限)
 git config --global --unset http.proxy
+git config --global --unset https.proxy
 ```
 
 ```
@@ -511,6 +514,7 @@ DECLARE_MY_VAR(int);
   in containers, ==irrespective of== how that data may be stored
 
 - 请明确说出一个container的end()函数的返回值
+
 - more:`std::set` 在 C++ 中是一个有序集合，它会==自动按照元素的值进行排序==。由于 `std::set` 是基于红黑树实现的，所以它的元素总是按照升序排序。
   - 基于其内部实现，我们可以得知，在不考虑运算符重载的前提下，set仅支持比较运算符生效的8中基本数据类型。
 
@@ -525,7 +529,10 @@ DECLARE_MY_VAR(int);
   	cout << itr->length() << endl;
   ```
 
-  
+
+- 不同类型迭代器
+
+  > ![image-20230911225859115](C:\Users\OrangeO_o\AppData\Roaming\Typora\typora-user-images\image-20230911225859115.png)
 
 ### map
 
@@ -621,3 +628,196 @@ else
 ### DFA
 
 - 凡是能画出状态转移图的，都大概率可以使用这种方法解决，关键在于，状态转移图不一定好画？
+
+- app：邮箱命名格式判断
+
+  - [代码实现](https://github.com/scz321/CS106L/blob/main/practicalDemo/practicalDemo/DFA.hpp)
+
+  - q其核心代码相当简洁，核心是画出状态转移图，据此进行transitions的初始化，
+
+    - 核心代码：
+
+      ```cpp
+      struct DFA {
+      	map<pair<int, char>, int> transitions;
+      	set<int> acceptingStates;
+      	int startState;
+      };
+      
+      bool SimulateDFA(DFA& d, string input) {
+      	int currState = d.startState;
+      	for (string::iterator itr = input.begin(); itr != input.end(); ++itr) {
+      		cout << "当前状态转移：" << currState << "-->" << d.transitions[make_pair(currState, *itr)] << endl;;
+      		currState = d.transitions[make_pair(currState, *itr)];
+      		
+      
+      	}
+      	//cout << "currState:" << currState << endl;
+      	return d.acceptingStates.find(currState) != d.acceptingStates.end();
+      }
+      
+      ```
+
+    - 初始化：
+
+      ```cpp
+      
+      //===========================下面是针对邮箱地址设置的相关内容，上面是通用设计=========
+      struct DFA LoadEmailDFA() {
+      	struct DFA ret;
+      	ret.startState = 0;
+      	ret.acceptingStates.insert(6);
+      
+      
+      	//这里反而是最麻烦的地方hhh，打错一个地方就g
+      	ret.transitions.insert(make_pair(make_pair(0,'a'),1));//注意，这里外层还需要一次make_pair
+      	ret.transitions.insert(make_pair(make_pair(0, '.'), 7));
+      	ret.transitions.insert(make_pair(make_pair(0, '@'), 7));
+      
+      	ret.transitions.insert(make_pair(make_pair(1, 'a'), 1));
+      	ret.transitions.insert(make_pair(make_pair(1, '@'), 3));
+      	ret.transitions.insert(make_pair(make_pair(1, '.'), 2));
+      
+      	ret.transitions.insert(make_pair(make_pair(2, 'a'), 1));
+      	ret.transitions.insert(make_pair(make_pair(2, '@'), 7));
+      	ret.transitions.insert(make_pair(make_pair(2, '.'), 7));
+      
+      	ret.transitions.insert(make_pair(make_pair(3, '@'), 7));
+      	ret.transitions.insert(make_pair(make_pair(3, '.'), 7));
+      	ret.transitions.insert(make_pair(make_pair(3, 'a'), 4));
+      
+      	ret.transitions.insert(make_pair(make_pair(4, '@'), 7));
+      	ret.transitions.insert(make_pair(make_pair(4, '.'), 5));
+      	ret.transitions.insert(make_pair(make_pair(4, 'a'), 4));
+      
+      	ret.transitions.insert(make_pair(make_pair(5, '@'), 7));
+      	ret.transitions.insert(make_pair(make_pair(5, '.'), 7));
+      	ret.transitions.insert(make_pair(make_pair(5, 'a'), 6));
+      
+      	ret.transitions.insert(make_pair(make_pair(6, '.'), 5));
+      	ret.transitions.insert(make_pair(make_pair(6, 'a'), 6));
+      	ret.transitions.insert(make_pair(make_pair(6, '@'), 7));
+      
+      	ret.transitions.insert(make_pair(make_pair(7, '@'), 7));
+      	ret.transitions.insert(make_pair(make_pair(7, '.'), 7));
+      	ret.transitions.insert(make_pair(make_pair(7, 'a'), 7));
+      
+      	return ret;
+      }
+      
+      
+      bool IsEmailAddress(string input) {
+      	DFA emailChecker = LoadEmailDFA(); 
+      	for (string::iterator itr = input.begin(); itr != input.end(); ++itr) {		
+      		if (isalnum(*itr))
+      			*itr = 'a';
+      		else if (*itr != '.' && *itr != '@')
+      			return false;
+      	}
+      	return SimulateDFA(emailChecker, input);
+      }
+      ```
+
+### NFA
+
+- 对它的实际应用还比较迷茫
+
+### 花式算法
+
+#### suffix 
+
+- _if
+  - 为什么调用IsEven时不用传递参数？解释
+
+```
+bool IsEven(int value) {
+	return value % 2 == 0;
+}
+
+cout << count_if(myVec.begin(), myVec.end(), IsEven) << endl;
+```
+
+- _n
+  - 
+
+#### reorder
+
+- 对于不支持<的数据类型，不进行运算符重载，同样可以调用sort：
+
+  ```cpp
+  bool ComparePlaces(placeT one, placeT two) {
+      if(one.x != two.x)
+          return one.x < two.x;
+      return one.y < two.y;
+  }
+  sort(myPlaceVector.begin(), myPlaceVector.end(), ComparePlaces);
+  ```
+
+- sort的第三个是函数参数，默认是使得结果升序，这里可以做文章
+
+#### Searching Algorithms
+
+
+
+ 	
+
+#### Iterator Adaptors
+
+
+
+
+
+#### Removal Algorithms
+
+- 这就是我们热血沸腾的组合技（by remove&erase)
+
+  ```cpp
+  myVector.erase(remove(myVector.begin(), myVector.end(), 137), myVector.end());
+  
+  string StripPunctuation(string input) {
+      input.erase(remove_if(input.begin(), input.end(), ispunct), input.end());
+      return input;
+  }
+  ```
+
+- remove会改变原来的container，如果不想改变，可以使用remove_copy/remove_copy_if
+
+#### transform
+
+- 啊？
+
+  > ![image-20230912105653906](C:\Users\OrangeO_o\AppData\Roaming\Typora\typora-user-images\image-20230912105653906.png)
+
+min_element/max_element
+
+> As with other algorithms, by default the elements are compared by <, but you can provide a binary
+> comparison function to the algorithms as a final parameter to change the default comparison order.
+
+#### 综合案例——回文字符串判定
+
+```cpp
+IsPalindrome:
+bool IsPalindrome(string input) {
+	input.erase(remove_if(input.begin(), input.end(), IsNotAlpha),
+	input.end());
+    transform(input.begin(), input.end(), input.begin(), ::toupper);
+    return equal(input.begin(), input.begin() + input.size() / 2,input.rbegin());
+}
+```
+
+more——回文文本判定：
+
+```cpp
+bool IsWordPalindrome(string input) {
+    input.erase(remove_if(input.begin(), input.end(), IsNotAlphaOrSpace),input.end());//IsNotAlphaOrSpace可以使用<cctype>头文件的函数轻松实现
+    transform(input.begin(), input.end(), input.begin(), ::toupper);
+    stringstream tokenizer(input);
+    vector<string> tokens;
+    tokens.insert(tokens.begin(),istream_iterator<string>(tokenizer),istream_iterator<string>());
+    return equal(tokens.begin(), tokens.begin() + tokens.size() / 2, tokens.rbegin());
+}
+
+
+```
+
+- 主要亮点在于：`tokens.insert(tokens.begin(),istream_iterator<string>(tokenizer),istream_iterator<string>());`

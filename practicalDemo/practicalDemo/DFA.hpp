@@ -22,8 +22,7 @@ bool SimulateDFA(DFA& d, string input) {
 		
 
 	}
-
-	cout << "currState:" << currState << endl;
+	//cout << "currState:" << currState << endl;
 	return d.acceptingStates.find(currState) != d.acceptingStates.end();
 }
 
