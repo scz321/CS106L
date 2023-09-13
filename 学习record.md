@@ -10,9 +10,14 @@ git push前：
 ```
 git config --global http.proxy
 git config --global https.proxy 
-(windows需要管理员权限)
 git config --global --unset http.proxy
 git config --global --unset https.proxy
+
+(windows需要管理员权限)
+
+如果上面的方法不行，可以试下面的方法（同样需要管理员权限）
+git config --global http.sslVerify false
+git config --global https.sslVerify false
 ```
 
 ```
@@ -821,3 +826,363 @@ bool IsWordPalindrome(string input) {
 ```
 
 - 主要亮点在于：`tokens.insert(tokens.begin(),istream_iterator<string>(tokenizer),istream_iterator<string>());`
+
+
+
+## template
+
+###### 模板类接口函数实现&注意事项
+
+- 经典错误1
+
+```
+template <typename FirstType, typename SecondType> class MyPair {
+public:
+	FirstType getFirst();
+	void setFirst(FirstType newValue);
+	SecondType getSecond();
+	void setSecond(SecondType newValue);
+private:
+	FirstType first;
+	SecondType second;
+};
+
+FirstType MyPair::getFirst() { // Problem: Not legal syntax
+	return first;
+}
+```
+
+- 经典错误2--想起来了要加上template，但是把函数的prototype和implement放在了不同的文件中
+
+  > 我认为本质原因在于，不同的源文件之间的template <typename FirstType, typename SecondType>是独立的，也就是说，a.h文件中的FirstType为int，b.h中的FirstType仍然是未知的。template的==作用域是单个源文件==
+  >
+  > 
+  >
+  > ChatGPT
+  >
+  > 
+  >
+  > 你是对的。在C++中，模板类和函数与普通的类和函数有一个重要的区别：它们不是在声明时被编译，而是在实例化时被编译。这意味着编译器只有在看到模板的实际使用（即实例化）时才会为其生成代码。
+  >
+  > 因为C++的==编译模型是基于单个编译单元（通常是一个`.cpp`文件及其包含的所有`.h`文件）进行编译的==，每个编译单元是独立编译的。如果模板的定义（即模板的全部代码，包括所有成员函数的实现）不在一个编译单元中被实例化，那么编译器就没有足够的信息来为这个模板生成代码。
+  >
+  > 这正是为什么模板的定义通常都放在头文件中，而不是`.cpp`文件中。这样，无论模板在哪个编译单元中被实例化，它的定义都是可用的，编译器都可以为它生成代码。
+  >
+  > 总之，由于C++的分离式编译模型和模板在实例化时才生成代码的特性，模板的定义必须对其所有的使用者都是可见的，以确保模板可以被正确编译和链接。
+
+> 一般命名为xx.hpp
+
+## 资源管理
+
+- 可以再看看modern c++32讲的相关内容
+
+### copy constructor vs assignment operator
+
+- assignment 和 cocy的核心区别：
+
+  > ![image-20230912185217556](C:\Users\OrangeO_o\AppData\Roaming\Typora\typora-user-images\image-20230912185217556.png)
+
+- 为什么要区分
+
+  > When assigning an existing object a new value,the existing object's value ceases to be and we must make sure to ==clean up any resources== the object may have allocated before setting it to the new value.
+
+- 它们都是基于对象进行讨论的，从这个角度来说，c++确实是一门面向对象的语言：
+
+  ```cpp
+  class MyClass {
+  public:
+      MyClass();
+      ~MyClass();
+      MyClass(const MyClass& other); // Copy constructor
+      MyClass& operator = (const MyClass& other); // Assignment operator
+      /* ... */
+  };
+  ```
+
+- cpp默认提供的copy constructor 和assignment operator：
+
+  > Unless you specify otherwise, C++ will automatically provide any class you write with a basic copy
+  > constructor and assignment operator that invoke the copy constructors and assignment operators of all
+  > the class's data members. In many cases, this is exactly what you want.
+
+- 在某些case下，必须弃用默认的复制构造函数和赋值重载函数（eg：类中含有指针，复制之后，执行析构函数，将会导致对同一个内存释放两次
+
+  - 一种方法是重写，老实人做法
+
+  - 另一种办法:写成private hhh
+
+  - > ![image-20230912205349959](C:\Users\OrangeO_o\AppData\Roaming\Typora\typora-user-images\image-20230912205349959.png)
+
+- 笑死，写成这样你就不认识了：
+
+  ```cpp
+  template <typename T> void Vector<T>::operator= (const Vector& other) {
+      logicalLength = other.logicalLength;
+      allocatedLength = other.allocatedLength;
+      array = new T[allocatedLength];
+      copy(other.begin(), other.end(), array);
+  }
+  ```
+
+  换个写法：
+
+  ```
+  template <typename T> 
+  void Vector<T>::operator= (const Vector& other) {
+      logicalLength = other.logicalLength;
+      allocatedLength = other.allocatedLength;
+      array = new T[allocatedLength];
+      copy(other.begin(), other.end(), array);
+  }
+  ```
+
+- 人类高质量_类&结构：尤其是要记忆一些复制构造函数的写法
+
+  ```cpp
+  MyClass::MyClass() : /* Fill in initializer list. */ {
+  /* Default initialization here. */
+  }
+  MyClass::MyClass(const MyClass& other) {
+  	copyOther(other);
+  }
+  MyClass& MyClass::operator =(const MyClass& other) {
+  	if(this != &other) {
+  		clear();
+  // Note: When we cover inheritance, there's one more step here.
+  		copyOther(other);
+  	}
+  	return *this;
+  }
+  MyClass::~MyClass() {
+  	clear();
+  }
+  ```
+
+- 深拷贝/浅拷贝问题
+
+- 解释：为什么当你只定义了一个拷贝构造函数时，无法使用默认构造函数？
+
+### SmartPointer
+
+首先是类的最基本成员的定义：
+
+mine：
+
+```cpp
+template<typename T>
+class SmartPointer {
+private:
+	T* ptr;
+
+public:
+	SmartPointer(T* mameory);
+	SmartPointer();
+	SmartPointer& operator =(const SmartPoniter& other);
+
+	T* operator ->() const;
+	T* operator *() const;
+};
+```
+
+correct:
+
+```cpp
+template<typename T>
+class SmartPointer {
+private:
+	T* ptr;
+
+public:
+	explicit SmartPointer(T* mameory);
+	SmartPointer();
+	SmartPointer& operator =(const SmartPoniter& other);
+
+	T& operator ->() const;
+	T* operator *() const;
+};
+```
+
+> 重载你函数的返回值还比较好理解，不好理解的地方在于explicit关键字的使用：
+>
+> Constructs a new SmartPointer that manages the resource specified as the parameter. The reference
+> count is initially set to one. We will assume that the provided pointer came from a call to new. This
+> function is marked explicit so that we cannot accidentally convert a regular C++ pointer to a
+> SmartPointer. At first this might seem like a strange design decision, but it prevents a wide range of
+> subtle bugs. For example, suppose that this constructor is not explicit and consider the following
+> function:
+>
+> ```cpp
+> void PrintString(const SmartPointer<string>& ptr) {
+> 	cout << *ptr << endl;
+> }
+> ```
+>
+> This function accepts a SmartPointer by reference-to-const, then prints out the stored string. Now,
+> what happens if we write the following code?
+>
+> ```cpp
+> string* ptr = new string("Yay!");
+> PrintString(ptr);
+> delete ptr;
+> ```
+>
+> The first line dynamically-allocates a string, passes it to PrintString, and finally deallocates it.
+> Unfortunately, this code will almost certainly cause a runtime crash. The problem is that PrintString
+> expects a SmartPointer<string> as a parameter, but we've provided a string*. C++ notices that the
+> SmartPointer<string> has a ==conversion constructor== that accepts a string*, and makes a ==temporary==
+> SmartPointer<string> using the pointer we passed as a parameter. This new SmartPointer starts
+> tracking the pointer with a reference count of one. After the function returns, the parameter is cleaned
+> up and its destructor invokes. This decrements the reference count to zero, and then deallocates the
+> pointer stored in the SmartPointer. The above code then tries to delete ptr a second time, causing a
+> runtime crash. To prevent this problem, we'll mark the constructor explicit, which ==makes the implicit==
+> ==conversion illegal== and prevents this buggy code from compiling.
+
+> 为什么重载运算符中，->的返回值是T&而dereferrence的返回值是T*?
+
+
+
+> 我注意到，我在类内声明时并没有明确设置返回值类型为SmartPointer<T>，为什么在类外实现时就需要？
+>
+> 
+>
+> ChatGPT
+>
+> 
+>
+> 我明白你的困惑了。在类模板中，类名后的模板参数 `<T>` 在类内部是可选的，但在类外部定义成员函数时则是必须的。这就是导致你看到这种差异的原因。
+>
+> 让我们详细解释一下。
+>
+> 1. **在类内部**：当你在类的内部声明成员函数时，编译器知道你是在为特定的模板实例 `SmartPointer<T>` 声明这些成员。所以，在返回类型或函数参数中，你可以直接使用 `SmartPointer` 而不用写 `SmartPointer<T>`。
+>
+>    ```
+>    cppCopy codetemplate<typename T>
+>    class SmartPointer {
+>    public:
+>        SmartPointer& operator =(const SmartPointer& other);
+>    };
+>    ```
+>
+> 2. **在类外部**：当你在类的外部定义这些成员函数时，你需要明确地告诉编译器这个成员函数是为哪个模板实例定义的。所以，你必须使用 `SmartPointer<T>`，而不能只用 `SmartPointer`。
+>
+>    ```
+>    cppCopy codetemplate<typename T>
+>    SmartPointer<T>& SmartPointer<T>::operator =(const SmartPointer& other) {
+>        // ...
+>    }
+>    ```
+>
+> 这是C++模板语法的一个特性，有时会使人感到困惑，特别是对于初学者。不过一旦你理解了这一点，这个规则就变得很直观了。
+
+
+
+### RALL & modern SmartPointer
+
+- [我的智能指针的实现]()
+
+  > 注意，我这里只是一个基本的实现，最好还应该加上get函数和reset函数。get函数的好处在于，
+  >
+  > - 对于我的原版智能指针来说，它的作用如下：
+  >
+  >   对于这种函数，原来需要一些trick才能使得myPtr表现得像是一个string（for ==semantical consisitance==)
+  >
+  >   > void DoSomething(string* ptr);
+  >   >
+  >   > 
+  >   >
+  >   > SmartPointer<string> myPtr(new string);
+  >   >
+  >   > DoSomething(&*myPtr);
+  >   >
+  >   > DoSomething(myPtr.operator-> ());
+  >
+  >   但是有了get函数，就可以直接调用以作为函数参数传入
+  >
+  > - 对于unique_ptr来说，其作用就更重要了，因为传入参数时会发生赋值，这会导致我们传入的指针指向的对象的资源被释放，这显然是我们不希望的
+
+  > ![image-20230913144749258](C:\Users\OrangeO_o\AppData\Roaming\Typora\typora-user-images\image-20230913144749258.png)
+
+- RAII 代表 "Resource Acquisition Is Initialization"（资源获取即初始化）。这个理念的主要思想是，我们将资源（如内存、文件句柄、网络连接等）的生命周期与对象的生命周期绑定。当对象创建时，资源被获取；当对象销毁时，资源被释放。这确保了资源的正确、简单和可预测的管理。
+- 智能指针是 RAII 在 C++ 中的一个经典实现。它们的主要目的是管理动态分配的对象的生命周期。传统的 C++ 动态内存管理，使用 `new` 和 `delete`，容易导致内存泄漏、双重释放等问题。
+
+> C++11 引入了以下几种智能指针：
+>
+> 1. **std::unique_ptr**：它拥有其指向的对象，保证对象有且仅有一个 `unique_ptr` 指向它。当 `unique_ptr` 离开作用域或被销毁时，它所指向的对象也会被删除。
+>
+> 2. **std::shared_ptr**：多个 `shared_ptr` 可以指向同一个对象。每个 `shared_ptr` 都有一个引用计数，记录有多少指针指向同一个对象。当最后一个指向对象的 `shared_ptr` 被销毁时，对象也会被删除。
+>
+> 3. **std::weak_ptr**：它与 `shared_ptr` 一起使用，不增加引用计数。它主要用于打破潜在的循环引用问题。
+>
+>    `auto_ptr` 是 C++98/03 标准库中的一个早期智能指针。在很多方面，它的行为与 `unique_ptr` 相似，特别是它们都拥有对资源的独占所有权。但是，`auto_ptr` 有一些问题和局限性，这使得它在 C++11 中被废弃并由 `unique_ptr` 取代。
+
+> c++实现RAII的方式就是对于所有的对象，都使用std::unique_ptr来进行初始化，赋值，这种说法是否准确?
+>
+> 
+>
+> ChatGPT
+>
+> 
+>
+> 这种说法是不准确的。虽然 `std::unique_ptr` 是一个很好的RAII工具，用于自动管理动态分配的对象的生命周期，但它只是实现RAII原则的众多工具之一。
+>
+> RAII 在 C++ 中的应用远不止 `std::unique_ptr`。RAII 的核心思想是将资源管理与对象的生命周期绑定。这意味着任何可以在其析构函数中释放资源的类都实现了RAII原则。
+>
+> 以下是RAII在C++中的几种应用：
+>
+> 1. **智能指针**：包括 `std::unique_ptr`、`std::shared_ptr` 和 `std::weak_ptr`。
+> 2. **容器**：例如 `std::vector`, `std::string` 等，它们在析构时释放所有分配的内存。
+> 3. **文件和流**：例如 C++ 的文件流类，当对象被销毁时，它们自动关闭文件。
+> 4. **锁**：例如 `std::lock_guard` 和 `std::unique_lock`，在离开作用域时自动释放锁。
+> 5. **自定义资源管理**：你可以为自己的资源（如数据库连接、网络套接字、图形上下文等）创建RAII类。
+>
+> 因此，尽管 `std::unique_ptr` 是实现RAII的一个常用工具，但在 C++ 中实现RAII并不意味着要为所有对象使用 `std::unique_ptr`。取决于你要管理的资源和使用场景，你可能会选择其他的工具或==自己定义RAII类。==
+
+
+
+
+
+## error handling
+
+- 结合代码理解这段话：
+
+  > When this occurs, you can report the error by using the throw keyword to “throw” the exception into the ==nearest==
+  > ==matching catch clause.==
+
+```
+try {
+// Do something
+}
+catch(int myInt) {
+// If the code throws an int, execution continues here.
+}
+catch(const vector<int>& myVector) {
+// Otherwise, if the code throws a vector<int>, execution resumes here.
+}
+catch(const string& myString) {
+// Same for string
+}
+```
+
+- 使用stdexcept来处理错误而不是直接将错误信息作为string传给catch的好处：
+
+  > 1. **语义清晰**：使用特定的异常类，如`invalid_argument`，可以清晰地表达错误的原因。这使得代码的意图更明确，读者可以立即知道错误是由于传入了无效参数。
+  >
+  > 2. **代码结构化**：使用标准异常类，==你可以更容易地使用多个`catch`块来处理不同的异常类型。==
+  >
+  >    ```
+  >    cppCopy codetry {
+  >        // ...
+  >    } catch (const std::invalid_argument& ia) {
+  >        // 处理无效参数
+  >    } catch (const std::out_of_range& oor) {
+  >        // 处理超出范围的错误
+  >    }
+  >    ```
+  >
+  > 3. **复用性与扩展性**：你可能有很多函数都会因为类似的原因抛出异常。如果你决定在某个时刻改变如何响应这些异常（例如，记录它们、提供不同的反馈等），使用标准异常类会更容易实现。
+  >
+  > 4. **与标准库和第三方库的兼容性**：标准库和许多第三方库在发生错误时会抛出标准异常。因此，学习和使用它们可以使你的代码与其他代码更加一致。
+
+- 总结：能不用就不用
+
+  > in many cases there's a much better alternative that results in concise, readable, and thoroughly exception-safe code – object memory management.
