@@ -23,6 +23,8 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="DFA.hpp" />
+    <ClInclude Include="functor.hpp" />
+    <ClInclude Include="getInteger.hpp" />
     <ClInclude Include="keyWordsCount.hpp" />
     <ClInclude Include="PalindromesJudge.hpp" />
     <ClInclude Include="smartPtr.hpp" />

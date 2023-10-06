@@ -1,16 +1,37 @@
 
 #include <iostream>
+#include <stdexcept>
+#include <cassert>
+#include <sstream>
+#include <vector>
+#include <iterator>
+#include <algorithm>
+#include <map>
+
 #include "keyWordsCount.hpp"
 #include "DFA.hpp"
 #include "PalindromesJudge.hpp"
 #include "smartPtr.hpp"
-#include <stdexcept>
+#include "getInteger.hpp"
+#include "functor.hpp"
 
-void setAge(int age) {
-	if (age < 0) {
-		throw invalid_argument("Age cannot be negative");
+using namespace std;
+
+void temp() {
+
+
+	std::map<int, std::string> myMap;
+	myMap[1] = "one";
+	myMap[2] = "two";
+	myMap[3] = "three";
+
+	for (const auto& iter : myMap) {
+		// 使用结构化绑定获取键和值
+		auto [key, value] = iter;
+		std::cout << "Key: " << key << ", Value: " << value << std::endl;
 	}
-	// ... 其他代码
+
+
 }
 
 
@@ -20,12 +41,12 @@ int main() {
 	//EmailAddressTest();
 	//IsPalindromesTextTest();
 	//SmartPointerTest();
-	try {
-		setAge(-5);
-	}
-	catch (const std::invalid_argument& ia) {
-		std::cerr << "Invalid argument: " << ia.what() << std::endl;
-	}
+	
+	
+	//callFunction(5.0, myFunction);  // 这里传递的是函数指针
+	//getIntegerTest();
+	//functorTest();
+	temp();
 
 	return 0;
 }
