@@ -1075,6 +1075,8 @@ FirstType MyPair::getFirst() { // Problem: Not legal syntax
   }
   ```
 
+###### 人类高质量类模板
+
 - ==人类高质量_类&结构：尤其是要记忆一些复制构造函数的写法==
 
   ```cpp
@@ -1522,6 +1524,8 @@ int UnsortedLowerBound(const vector<int>& input, int lowerBound) {
 
 绷不住了，对面来了一对，好好好，这么玩是吧，他妈的（10.05）
 
+- 好好好，现在也有人陪OrangeO_o一起学习了
+
 #### lambda expression
 
 - 示例：
@@ -1553,7 +1557,7 @@ int UnsortedLowerBound(const vector<int>& input, int lowerBound) {
 > 下面的例子展示了一个 lambda 表达式的类型是如何被自动推断的：
 >
 > ```cpp
-> cppCopy code#include <iostream>
+> #include <iostream>
 > 
 > int main() {
 >     auto myLambda = [](int x, int y) { return x + y; };
@@ -1670,7 +1674,8 @@ int UnsortedLowerBound(const vector<int>& input, int lowerBound) {
 >
 > 这些概念在理解 C++ 的高级特性，如移动语义、完美转发等方面是非常关键的。希望这些例子能帮助您理解左值和右值，以及它们的引用。
 
-
+- 好好好，这下不得不收集表情包了。。
+- 等等，突然想到，颜文字好像也可以收集收集（doge
 
 > 请结合实例解释cpp中的Move Semantics的概念
 >
@@ -1687,7 +1692,7 @@ int UnsortedLowerBound(const vector<int>& input, int lowerBound) {
 > 下面的例子演示了移动语义的基本概念和用法：
 >
 > ```cpp
-> cppCopy code#include <iostream>
+> #include <iostream>
 > #include <vector>
 > #include <string>
 > 
@@ -1999,7 +2004,7 @@ solution：
 
 - function signature:函数声明‘
 
-### 源码分析
+#### 源码分析
 
 首先，最重要的部分当然是源码分析，自然是从mian函数开始：
 
@@ -3003,3 +3008,228 @@ hint中有这样一段话：
 好好好，开始还债了。之前的move semantics你因为觉得它篇幅有点长就不看是吧，现在还是得老老实实回头看了。
 
 ![image-20231006221419089](C:\Users\OrangeO_o\AppData\Roaming\Typora\typora-user-images\image-20231006221419089.png)
+
+四个byd排好队，哥们一个一个解决：
+首先是copy constructor：
+下面是我一开始的写法，但是还没等测试我就意识到了不对hhh，看来看书还是挺有效果的：
+
+```cpp
+//首先是复制构造函数 --当然是要深拷贝啦
+template <typename K, typename M, typename H>
+HashMap<K,M,H>::HashMap(HashMap<K,M,H>& other){
+    this->_size=other->_size;
+    this->_hash_function=other->_hash_function;
+    //你直接这样copy是会出错的！这种意识应该要有，或者说，对于copy函数，这才是你该记的
+    copy(other->_buckets_array.begin(),other->_buckets_array.end(),_buckets_array.begin)
+    
+}
+```
+
+```cpp
+
+//是时候展现adaptor的威力了！
+    copy(other->_buckets_array.begin(),other->_buckets_array.end(),back_insert_iterator(this->_buckets_array.begin()));
+
+```
+
+- 好，下一步是赋值构造函数，这里我一开始还十分有逻辑地思考了一小会儿，然后突然想起来，这不是有模板的嘛hhh。理解模板，记忆模板，成为模板（doge
+
+[模板链接](#人类高质量类模板)
+
+
+
+
+
+好家伙，看了模板链接之后好像还是没写对qwq。
+
+先给出我当前的move的俩函数：（仍然会报错）
+
+```cpp
+//好好好，这种活学活用的感觉好快乐！
+
+//下面是move构造函数
+template <typename K, typename M, typename H>
+HashMap<K,M,H>::HashMap(HashMap<K,M,H>&& other){
+    this->_size=other->_size;
+    this->_hash_function=other->_hash_function;
+    //你直接这样copy是会出错的！这种意识应该要有，或者说，对于copy函数，这才是你该记的
+    //copy(other->_buckets_array.begin(),other->_buckets_array.end(),_buckets_array.begin)
+
+    //是时候展现adaptor的威力了！
+    copy(other->_buckets_array.begin(),other->_buckets_array.end(),back_insert_iterator(this->_buckets_array.begin()));
+
+    //增加一个销毁步骤
+    // other._size=0;
+    // other._hash_function=NULL;
+    // other._buckets_array.clear();
+    // // 使用 shrink_to_fit() 函数释放不需要的内存
+    // other._buckets_array.shrink_to_fit();
+    other.clear();
+}
+
+//move赋值函数
+template <typename K, typename M, typename H>
+HashMap<K,M,H>& HashMap<K,M,H>::operator=(HashMap<K,M,H>&& other){
+    if(other!=this){
+        clear();
+        this->_size=other->_size;
+        this->_hash_function=other->_hash_function;
+        //你直接这样copy是会出错的！这种意识应该要有，或者说，对于copy函数，这才是你该记的
+        //copy(other->_buckets_array.begin(),other->_buckets_array.end(),_buckets_array.begin)
+
+        //是时候展现adaptor的威力了！
+        copy(other->_buckets_array.begin(),other->_buckets_array.end(),back_insert_iterator(this->_buckets_array.begin()));
+
+        //增加一个销毁步骤
+        //谁教你这样销毁的，笨猪
+        // other._size=0;
+        // other._hash_function=NULL;
+        // other._buckets_array.clear();
+        // // 使用 shrink_to_fit() 函数释放不需要的内存
+        // other._buckets_array.shrink_to_fit();
+        other.clear();
+
+        return *this;
+    }
+    return *this;
+}
+```
+
+你写出上面的代码只能说明你淡忘了move semantics的核心理念（想想那张图！）
+
+---------------------------------------------
+
+- 最难绷的一集
+
+小小的四个函数写了有两个多小时了还没写对，这要是让你写整个HashMasp，我都不敢想你要写多久，写不对，完全写不对qwq。
+
+-----------------
+
+下面面临一个抉择，继续写or看参考答案qwq
+
+
+
+
+
+好好好，结合答案，还是没写对。不过颇有收获！！
+
+首先，在参考了网上的答案之后，我写出了如下版本的move semantics：
+
+```cpp
+template <typename K, typename M, typename H>
+ HashMap<K,M,H>& HashMap<K,M,H>::operator=(HashMap<K,M,H>&& other)
+ {
+    if(&other==this) return *this;
+    clear();
+    _size=std::move(other._size);
+     _hash_function = std::move(other._hash_function);
+    //_buckets_array=std::move(other._buckets_array);
+     _buckets_array.resize(other.bucket_count());
+
+    other._size=0;
+
+    return *this;
+ }
+```
+
+自信满满地运行，莫名其妙地报错：
+![image-20231007213232038](C:\Users\OrangeO_o\AppData\Roaming\Typora\typora-user-images\image-20231007213232038.png)
+
+ 网上的资料好像说是浮点数除以0会出现这种情况，但是经过本人的大胆推测，小心求证，推测这个错误的原因是野指针的存在。
+
+本质原因可以参考下面这段对话：（一言以蔽之，_buckets_array中的每个元素都是一个单独的链表的头指针！都需要把头指针置为knullptr！）
+
+> 我现在已经发现了问题所在，请你仔细阅读我之前提供给你的HashMap.h，我相信你也可以发现这里使用遍历方式的必要性
+>
+> 
+>
+> ChatGPT
+>
+> 
+>
+> 经过重新查看你提供的 `HashMap.h` 文件，我注意到这里的问题可能与 `node*` 在 `std::vector<node*>` 中的处理有关。在你的原始移动赋值操作符的实现中：
+>
+> ```cpp
+> _buckets_array=std::move(other._buckets_array);
+> ```
+>
+> 你是对整个 `_buckets_array` 进行了移动操作。这通常是有效的，但在这个特定情况中，由于 `std::vector<node*>` 包含的是指向节点的指针，你可能需要更明确地处理这些指针来避免潜在的问题。
+>
+> 在你修改后的代码中：
+>
+> ```cpp
+> for (size_t i = 0; i < rhs.bucket_count(); i++) {
+>     _buckets_array[i] = std::move(rhs._buckets_array[i]);
+>     rhs._buckets_array[i] = nullptr;
+> }
+> ```
+>
+> 你显式地移动了每个 `node*` 并将它们设置为 `nullptr`。这确保了每个节点都被正确地转移，并且源 `HashMap` 不再有指向这些节点的指针。这样可以防止在 `other` 被销毁或再次使用时出现未定义的行为或错误。
+>
+> 所以，我认为你通过更明确地管理 `node*` 指针解决了这个问题，这是一个更安全和清晰的做法。
+
+总之还是我太天真了，我天真地认为STL vector的move semantic可以处理所有case，所以认为一句话就够了。可以参照教材中给出的vector的参考实现
+
+![image-20231007212928024](C:\Users\OrangeO_o\AppData\Roaming\Typora\typora-user-images\image-20231007212928024.png)
+
+
+
+
+
+好好好，进行了进一步修改：
+
+```cpp
+template <typename K, typename M, typename H>
+HashMap<K,M,H>::HashMap(HashMap<K,M,H>&& other):
+_size{std::move(other._size)},
+_hash_function{std::move(other._hash_function)},
+_buckets_array{other.bucket_count(), nullptr}
+//这里我假设了STL_vector提供了与之对应的move semantics
+//楼上是小丑🤣🤣🤣
+{
+    _buckets_array.resize(other.bucket_count());
+    for(size_t i=0;i<other.bucket_count();i++){
+        _buckets_array[i]=std::move(other._buckets_array[i]);
+        other._buckets_array[i]=nullptr;
+    }
+    other._size=0;
+}
+
+
+template <typename K, typename M, typename H>
+ HashMap<K,M,H>& HashMap<K,M,H>::operator=(HashMap<K,M,H>&& other)
+ {
+    if(&other==this) return *this;
+    clear();
+    _size=std::move(other._size);
+     _hash_function = std::move(other._hash_function);
+     //下面这种方法使不得
+    //_buckets_array=std::move(other._buckets_array);
+    _buckets_array.resize(other.bucket_count());
+    for (size_t i = 0; i < other.bucket_count(); i++) {
+            _buckets_array[i] = std::move(other._buckets_array[i]);
+            other._buckets_array[i] = nullptr;
+        }
+
+    other._size=0;
+
+    return *this;
+ }
+// move a
+```
+
+然后...信心满满地运行，不出意外地报错🤣🤣
+
+![image-20231007220033557](C:\Users\OrangeO_o\AppData\Roaming\Typora\typora-user-images\image-20231007220033557.png)
+
+是你逼我的，只能使出最后一招，面向测试用例编程了。
+
+定位到错误信息处，稍作分析（其实还分析了有一会儿hhh），即可发现问题所在！！scz真棒！
+
+问题在于，你当时尚未领会到move operator的精髓所在！下面红框的部分是彻彻底底多余的！！
+
+![image-20231007221410201](C:\Users\OrangeO_o\AppData\Roaming\Typora\typora-user-images\image-20231007221410201.png)
+
+自信运行，拿下！（另，看来网上的答案也不一定全对hhh）
+
+![image-20231007221304181](C:\Users\OrangeO_o\AppData\Roaming\Typora\typora-user-images\image-20231007221304181.png)

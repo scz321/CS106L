@@ -19,20 +19,25 @@ using namespace std;
 
 void temp() {
 
-
-	std::map<int, std::string> myMap;
-	myMap[1] = "one";
-	myMap[2] = "two";
-	myMap[3] = "three";
-
-	for (const auto& iter : myMap) {
-		// 使用结构化绑定获取键和值
-		auto [key, value] = iter;
-		std::cout << "Key: " << key << ", Value: " << value << std::endl;
-	}
+	return;
 
 
 }
+class MyClass {
+public:
+	MyClass(const std::string& name) : name(name) {}
+
+	void setName(const std::string& newName) {
+		name = newName;
+	}
+
+	std::string getName() const {
+		return name;
+	}
+
+private:
+	std::string name;
+};
 
 
 using namespace std;
@@ -46,7 +51,17 @@ int main() {
 	//callFunction(5.0, myFunction);  // 这里传递的是函数指针
 	//getIntegerTest();
 	//functorTest();
-	temp();
+	
+	
+	//temp();
+	MyClass t1("施成志");
+	t1.setName("hhh");
+	cout << t1.getName() << endl;
+
+	const MyClass t2("abc");
+	t2.setName("hhh");
+	cout << t2.getName() << endl;
+
 
 	return 0;
 }

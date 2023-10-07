@@ -86,6 +86,7 @@ public:
     friend class HashMapIterator<HashMap, false>;
     friend class HashMapIterator<HashMap, true>;
 
+    //默认构造函数
     /*
     * Default constructor
     * Creates an empty HashMap with default number of buckets and hash function.
@@ -97,6 +98,25 @@ public:
     * Complexity: O(B), B = number of buckets
     */
     HashMap();
+
+//add 复制构造函数
+    
+    HashMap(const HashMap& other);
+    
+//end
+
+//add 赋值重载函数
+//这里的核心在于分辨赋值和复制的区别：两者的区别不在于赋值运算符的区别，而在于左值是不是新创建的
+    HashMap& operator=(const HashMap& other);
+//end
+
+//add move constructor/move assiginment operator
+    HashMap(HashMap&& other);
+    HashMap& operator=(HashMap&& other);
+
+//end
+
+
 
     /*
     * Constructor with bucket_count and hash function as parameters.

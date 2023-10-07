@@ -304,4 +304,126 @@ std::ostream& operator<<(std::ostream& os, const HashMap<K, M, H>& rhs) {
 
 //四个符合stl标准类的特殊函数
 
+//首先是复制构造函数 --当然是要深拷贝啦
+// template <typename K, typename M, typename H>
+// HashMap<K,M,H>::HashMap(const HashMap<K,M,H>& other){
+//     this->_size=other._size;
+//     //this->_hash_function=other->_hash_function;
+//     //你直接这样copy是会出错的！这种意识应该要有，或者说，对于copy函数，这才是你该记的
+//     //copy(other->_buckets_array.begin(),other->_buckets_array.end(),_buckets_array.begin)
+
+//     //是时候展现adaptor的威力了！
+//     copy(other._buckets_array.begin(),other._buckets_array.end(),back_inserter(this->_buckets_array));
+
+
+// }
+
+template <typename K, typename M, typename H>
+HashMap<K,M,H>::HashMap(const HashMap<K,M,H>& other):HashMap(other.bucket_count(),other._hash_function){
+    //这里要掌握自动遍历语法的本质：本质上是调用该容器的迭代器
+    for(auto [key,value]:other){
+        insert(std::make_pair(key,value));
+    }
+
+}
+//然后是赋值构造函数
+template <typename K, typename M, typename H>
+
+HashMap<K,M,H>& HashMap<K,M,H>::operator=(const HashMap<K,M,H>& other){
+    if(this!=&other){
+        clear();
+        for(auto [key,value]:other){
+            insert(make_pair(key,value));
+        }
+        return *this;
+    }
+    return *this;
+}
+
+//好好好，这种活学活用的感觉好快乐！
+
+
+//====================my wrong version  begin==============
+//下面是move构造函数
+// template <typename K, typename M, typename H>
+// HashMap<K,M,H>::HashMap(HashMap<K,M,H>&& other){
+//     //this->_size=std::move(other->_size);
+//     this->_size=other._size;
+//     this->_hash_function=std::move(other._hash_function);
+//     this->_buckets_array=std::move(other._buckets_array);
+//     //other.clear();
+// }
+
+//move赋值函数
+
+
+// template <typename K, typename M, typename H>
+// HashMap<K,M,H>& HashMap<K,M,H>::operator=(HashMap<K,M,H>&& other){
+//      if (&other != this) {
+//         clear(); // 可能还需要执行其他的清理操作
+//         this->_size = other._size;
+//         this->_hash_function = std::move(other._hash_function);
+//         this->_buckets_array = std::move(other._buckets_array);
+//         // 不需要再手动清理 other，因为资源已经在移动操作中正确处理了
+//     }
+//     return *this;
+// }
+
+
+
+//================my wrong version end(originally wrong ,now ok)========================
+template <typename K, typename M, typename H>
+HashMap<K,M,H>::HashMap(HashMap<K,M,H>&& other):
+_size{std::move(other._size)},
+_hash_function{std::move(other._hash_function)},
+_buckets_array{other.bucket_count(), nullptr}
+//这里我假设了STL_vector提供了与之对应的move semantics
+//楼上是小丑🤣🤣🤣
+{
+    _buckets_array.resize(other.bucket_count());
+    for(size_t i=0;i<other.bucket_count();i++){
+        _buckets_array[i]=std::move(other._buckets_array[i]);
+        other._buckets_array[i]=nullptr;
+    }
+    other._size=0;
+}
+
+
+template <typename K, typename M, typename H>
+ HashMap<K,M,H>& HashMap<K,M,H>::operator=(HashMap<K,M,H>&& other)
+ {
+    if(&other==this) return *this;
+    clear();
+    _size=std::move(other._size);
+     _hash_function = std::move(other._hash_function);
+     //下面这种方法使不得
+    //_buckets_array=std::move(other._buckets_array);
+    _buckets_array.resize(other.bucket_count());
+    for (size_t i = 0; i < other.bucket_count(); i++) {
+            _buckets_array[i] = std::move(other._buckets_array[i]);
+            other._buckets_array[i] = nullptr;
+        }
+
+    //other._size=0;
+
+    return *this;
+ }
+// move assignment operator
+// template <typename K, typename M, typename H>
+// HashMap<K, M, H>& HashMap<K, M, H>::operator=(HashMap&& rhs) {
+//     if (this != &rhs) {
+//         clear();
+//         _size = std::move(rhs._size);
+//         _hash_function = std::move(rhs._hash_function);
+//         _buckets_array.resize(rhs.bucket_count());
+//         for (size_t i = 0; i < rhs.bucket_count(); i++) {
+//             _buckets_array[i] = std::move(rhs._buckets_array[i]);
+//             rhs._buckets_array[i] = nullptr;
+//         }
+//         rhs._size = 0;
+//     }
+//     return *this;
+// }
+
+
 /* end student code */
